@@ -29,7 +29,6 @@ class VoiceLibrary:
     def _read_in_voice_library(self):
         with open(self.voice_library_filepath, "r") as f:
             voice_library_json = json.load(f)
-            voice_library_json = voice_library_json["conversations"]
         voice_library = convert_voice_library_json_to_mapping(voice_library_json)
         session = sessionmaker(bind=self.engine)()
         session.bulk_insert_mappings(
