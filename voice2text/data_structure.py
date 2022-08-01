@@ -15,14 +15,15 @@ class AudioClip(Base):
     voiceover_entry = relationship("VoiceOverEntry")
 
 
-class ConversationNode(Base):
-    __tablename__ = "conversation_node"
+class DialogueEntry(Base):
+    __tablename__ = "dialogue_entry"
 
     id = Column(Integer, primary_key=True)
-    node_name = Column(String)
-    raw_conversation_text = Column(String, nullable=True)
-    cleaned_conversation_text = Column(String, nullable=True)
+    raw_dialogue_entry = Column(String, nullable=True)
+    cleaned_dialogue_entry = Column(String, nullable=True)
     narrator_override = Column(Boolean, nullable=True)
+    actor_id = Column(Integer, nullable=True)
+    conversant_id = Column(Integer, nullable=True)
 
     articy_id = Column(String, ForeignKey("voiceover_entry.articy_id"))
 
