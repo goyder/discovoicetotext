@@ -19,23 +19,25 @@ class DialogueEntry(Base):
     __tablename__ = "dialogue_entry"
 
     id = Column(Integer, primary_key=True)
+    articy_id = Column(String)
     raw_dialogue_entry = Column(String, nullable=True)
     cleaned_dialogue_entry = Column(String, nullable=True)
     narrator_override = Column(Boolean, nullable=True)
     actor_id = Column(Integer, nullable=True)
     conversant_id = Column(Integer, nullable=True)
 
-    articy_id = Column(String, ForeignKey("voiceover_entry.articy_id"))
+    voiceover_entry = relationship("VoiceOverEntry", back_populates="dialogue_entry", uselist=False)
 
 
 class VoiceOverEntry(Base):
     __tablename__ = "voiceover_entry"
 
-    articy_id = Column(String, primary_key=True)
+    articy_id = Column(String, ForeignKey("dialogue_entry.articy_id"), primary_key=True)
     asset_name = Column(String)
     asset_bundle = Column(String)
     path_to_clip_in_project = Column(String)
     filename = Column(String, ForeignKey("audio_clip.filename"), nullable=True)
+    dialogue_entry = relationship("DialogueEntry", back_populates="voiceover_entry", uselist=False)
 
     audio_clip = relationship("AudioClip", back_populates="voiceover_entry")
 

@@ -52,6 +52,15 @@ def test_read_in_dialogue_entries(sql_engine):
     pass
 
 
+def test_read_in_all_game_data(sql_engine):
+    de.read_in_voice_library(sql_engine, os.environ["VOICEOVER_LIBRARY_FILEPATH"])
+    de.read_in_dialogue_entries(sql_engine, os.environ["GAME_DATA_FILEPATH"])
+
+    with sessionmaker(bind=sql_engine)() as session:
+        session.query(ds.DialogueEntry).first()
+        session.query(ds.VoiceOverEntry).first()
+
+
 """Voice library conversion"""
 
 
