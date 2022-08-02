@@ -5,11 +5,10 @@ from sqlalchemy.orm import sessionmaker
 import voice2text.data_structure as ds
 import json
 import os
+import os.path
 
 
-"""
-Voice library conversions
-"""
+"""Voice library conversions"""
 
 
 def convert_voice_library_json_to_mapping(voice_library: dict) -> dict:
@@ -40,9 +39,8 @@ def read_in_voice_library(engine: Engine, voice_library_filepath: str):
         session.commit()
 
 
-"""
-Conversation node conversions
-"""
+"""Conversation node conversions"""
+
 
 dialogue_entry_mapping_key = {
     "Articy Id": "articy_id",
@@ -95,6 +93,70 @@ def read_in_dialogue_entries(engine: Engine, game_data_filepath: str):
         session.commit()
 
 
+"""Audio Clip extractions"""
+
+
+def extract_audio_clip_mappings(directory: str) -> dict:
+    file_list = os.listdir(directory)
+    file_list = [file for file in file_list if os.path.splitext(file)[-1].lower() == ".wav"]
+    audio_clip_mapping = [
+        {
+            "filename": filename,
+            "filepath": os.path.join(directory, filename),
+            "size": os.path.getsize(os.path.join(directory, filename))
+        } for filename in file_list
+    ]
+    return audio_clip_mapping
         
 
-        
+def read_in_audio_clips(engine: Engine, directory: str):
+    audio_clip_mapping = extract_audio_clip_mappings(directory)
+    with sessionmaker(bind=engine)() as session:
+        session.bulk_insert_mappings(
+            ds.AudioClip,
+            audio_clip_mapping
+        )
+        session.commit()
+
+
+"""Actor ID extraction"""
+
+
+actor_mapping_key = {
+    "Name": "name",
+    "character_short_name": "character_short_name"
+}
+
+
+def extract_actor_field_mappings(actor_object: dict) -> dict:
+    fields = {
+        field["title"]: field["value"] for field in actor_object["fields"]
+    }
+    return {
+        value: fields[key] for key, value in actor_mapping_key.items()
+    }
+
+
+def extract_actor_mappings(actor_objects: list):
+    required_field_titles = set(actor_mapping_key.keys())
+    mapped_actors = []
+    for actor_object in actor_objects:
+        field_titles = [field["title"] for field in actor_object["fields"] if field["title"] in required_field_titles]
+        if set(field_titles) != required_field_titles:
+            continue
+        actor_mapping = extract_actor_field_mappings(actor_object)
+        actor_mapping["actor_id"] = actor_object["id"]
+        mapped_actors.append(actor_mapping)
+    return mapped_actors
+
+
+def read_in_actors(engine: Engine, game_data_filepath: str):
+    with open(game_data_filepath, "r") as f:
+        actor_json = json.load(f)["actors"]
+    actor_mappings = extract_actor_mappings(actor_json)
+    with sessionmaker(bind=engine)() as session:
+        session.bulk_insert_mappings(
+            ds.Actor,
+            actor_mappings
+        )
+        session.commit()

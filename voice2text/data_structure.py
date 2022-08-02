@@ -12,7 +12,15 @@ class AudioClip(Base):
     filename = Column(String)
     filepath = Column(String)
 
-    voiceover_entry = relationship("VoiceOverEntry")
+    voiceover_entry = relationship("VoiceOverEntry", back_populates="audio_clip", uselist=False)
+
+
+class Actor(Base):
+    __tablename__ = "actor"
+
+    actor_id = Column(Integer, primary_key=True)
+    name = Column(String)
+    character_short_name = Column(String)
 
 
 class DialogueEntry(Base):
@@ -37,7 +45,7 @@ class VoiceOverEntry(Base):
     asset_bundle = Column(String)
     path_to_clip_in_project = Column(String)
     filename = Column(String, ForeignKey("audio_clip.filename"), nullable=True)
-    dialogue_entry = relationship("DialogueEntry", back_populates="voiceover_entry", uselist=False)
 
+    dialogue_entry = relationship("DialogueEntry", back_populates="voiceover_entry", uselist=False)
     audio_clip = relationship("AudioClip", back_populates="voiceover_entry")
 
