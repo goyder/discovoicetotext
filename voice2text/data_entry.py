@@ -24,7 +24,7 @@ def convert_voice_library_mapping(voice_library_item: dict) -> dict:
         "articy_id": voice_library_item["ArticyID"],
         "asset_bundle": voice_library_item["AssetBundle"],
         "path_to_clip_in_project": voice_library_item["PathToClipInProject"],
-        "filename": os.path.split(voice_library_item["PathToClipInProject"])[-1]
+        "filename": voice_library_item["PathToClipInProject"].split("\\")[-1]
     }
 
 def read_in_voice_library(engine: Engine, voice_library_filepath: str):
@@ -39,7 +39,7 @@ def read_in_voice_library(engine: Engine, voice_library_filepath: str):
         session.commit()
 
 
-"""Conversation node conversions"""
+"""Dialogue entry conversions"""
 
 
 dialogue_entry_mapping_key = {

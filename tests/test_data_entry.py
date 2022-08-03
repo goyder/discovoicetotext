@@ -42,6 +42,19 @@ def actor_object(game_data_json: dict) -> list:
     return game_data_json["actors"]
 
 
+@pytest.fixture(scope="module")
+def loaded_engine() -> Engine:
+    
+    engine = create_engine("sqlite:///:memory:", echo=True)
+    ds.Base.metadata.create_all(engine)
+    
+    de.read_in_voice_library(engine, os.environ["VOICEOVER_LIBRARY_FILEPATH"])
+    de.read_in_dialogue_entries(engine, os.environ["GAME_DATA_FILEPATH"])
+    de.read_in_audio_clips(engine, os.environ["AUDIO_CLIP_DIRECTORY"])
+    de.read_in_actors(engine, os.environ["GAME_DATA_FILEPATH"])
+    return engine
+
+
 """High level tests"""
 
 
@@ -69,18 +82,34 @@ def test_read_in_audio_clips(sql_engine):
     pass
 
 
-def test_read_in_all_game_data(sql_engine):
-    de.read_in_voice_library(sql_engine, os.environ["VOICEOVER_LIBRARY_FILEPATH"])
-    de.read_in_dialogue_entries(sql_engine, os.environ["GAME_DATA_FILEPATH"])
-    de.read_in_audio_clips(sql_engine, os.environ["AUDIO_CLIP_DIRECTORY"])
-    de.read_in_actors(sql_engine, os.environ["GAME_DATA_FILEPATH"])
-
-    with sessionmaker(bind=sql_engine)() as session:
-        session.query(ds.DialogueEntry).first()
+def test_complete_basic_queries(loaded_engine):
+    with sessionmaker(bind=loaded_engine)() as session:
+        first_dialogue = session.query(ds.DialogueEntry).first()
         session.query(ds.VoiceOverEntry).first()
         session.query(ds.AudioClip).first()
         session.query(ds.Actor).first()
 
+        assert first_dialogue.voiceover_entry is not None
+        assert first_dialogue.voiceover_entry.audio_clip is not None
+
+
+def test_complete_joined_queries(loaded_engine):
+    with sessionmaker(bind=loaded_engine)() as session:
+        kim_clips = (session.query(ds.DialogueEntry)
+         .join(ds.VoiceOverEntry, ds.VoiceOverEntry.articy_id==ds.DialogueEntry.articy_id)
+         .join(ds.AudioClip, ds.AudioClip.filename==ds.VoiceOverEntry.filename)
+         .join(ds.Actor, ds.Actor.actor_id == ds.DialogueEntry.actor_id)
+         .with_entities(
+            ds.Actor.name,
+            ds.DialogueEntry.raw_dialogue_entry, 
+            ds.DialogueEntry.actor_id, 
+            ds.AudioClip.filename,
+            )
+         .filter(ds.Actor.name == "Kim Kitsuragi")
+         .all()
+        )
+        assert len(kim_clips) > 3000
+        
 
 """Voice library conversion"""
 
