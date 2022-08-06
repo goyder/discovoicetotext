@@ -1,5 +1,6 @@
 import voice2text.data_structure as ds
 import voice2text.data_entry as de
+import voice2text.text_analysis as ta
 from sqlalchemy import create_engine
 import os
 from sqlalchemy.orm import sessionmaker
@@ -28,15 +29,16 @@ class QueryEngine:
         de.read_in_actors(self.engine, os.environ["GAME_DATA_FILEPATH"])
 
     query_clips_by_actor_default_entities = [
-        ds.Actor.name,
         ds.DialogueEntry.raw_dialogue_entry, 
+        ds.AudioClip.filepath,
+        ds.Actor.name,
+        ds.AudioClip.filename,
         ds.DialogueEntry.actor_id, 
-        ds.AudioClip.filename
     ]
 
     def query_clips_by_actor(self, 
         actor: str, 
-        entities_to_retrieve: Iterable[Column] = query_clips_by_actor_default_entities):
+        entities_to_retrieve: Iterable[Column] = query_clips_by_actor_default_entities) -> Iterable[Column]:
         with sessionmaker(bind=self.engine)() as session:
             clips = (session.query(ds.DialogueEntry)
                 .join(ds.VoiceOverEntry, ds.VoiceOverEntry.articy_id==ds.DialogueEntry.articy_id)
@@ -54,4 +56,14 @@ class QueryEngine:
     def session(self):
         return sessionmaker(bind=self.engine)()
 
-    
+    def build_training_dataset(self, actor, format="JSON"):
+        clips = self.query_clips_by_actor(
+            actor=actor, 
+            entities_to_retrieve=self.query_clips_by_actor_default_entities)
+        
+        if format == "JSON":
+            output = [{
+                "dialogue": ta.extract_dialogue(clip.raw_dialogue_entry),
+                "filepath": clip.filepath
+            } for clip in clips if ta.extract_dialogue(clip.raw_dialogue_entry) != ""]
+            return output

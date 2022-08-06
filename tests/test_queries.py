@@ -36,3 +36,14 @@ def test_complete_actor_queries(query_engine):
     for output in outputs:
         if output.actor_id in actor_id_mappings.keys():
             assert output.name == actor_id_mappings[output.actor_id]
+
+
+def test_complete_dialogue_entry_queries(query_engine):
+    outputs = Query(ds.DialogueEntry, session=query_engine.session).all()
+
+    pass
+
+
+def test_generate_dataset(query_engine):
+    output = query_engine.build_training_dataset("Kim Kitsuragi")
+    pass
