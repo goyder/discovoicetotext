@@ -47,3 +47,11 @@ def test_complete_dialogue_entry_queries(query_engine):
 def test_generate_dataset(query_engine):
     output = query_engine.build_training_dataset("Kim Kitsuragi")
     pass
+
+
+def test_generate_dataset_with_dataset_limit(query_engine: queries.QueryEngine):
+    output = query_engine.build_training_dataset(
+        "Kim Kitsuragi",
+        item_count=100
+        )
+    assert len(output) == 100

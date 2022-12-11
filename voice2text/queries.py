@@ -60,7 +60,7 @@ class QueryEngine:
     def session(self):
         return sessionmaker(bind=self.engine)()
 
-    def build_training_dataset(self, actor, format="JSON"):
+    def build_training_dataset(self, actor, format="JSON", item_count=None):
         clips = self.query_clips_by_actor(
             actor=actor, 
             entities_to_retrieve=self.query_clips_by_actor_default_entities
