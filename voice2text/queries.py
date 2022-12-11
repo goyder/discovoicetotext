@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 import voice2text.data_structure as ds
 import voice2text.data_entry as de
 import voice2text.text_analysis as ta
@@ -6,6 +7,9 @@ import os
 from sqlalchemy.orm import sessionmaker
 from typing import Iterable
 from sqlalchemy.schema import Column
+import random
+import shutil
+from sox import file_info
 
 
 class QueryEngine:
@@ -59,11 +63,50 @@ class QueryEngine:
     def build_training_dataset(self, actor, format="JSON"):
         clips = self.query_clips_by_actor(
             actor=actor, 
-            entities_to_retrieve=self.query_clips_by_actor_default_entities)
+            entities_to_retrieve=self.query_clips_by_actor_default_entities
+            )
         
         if format == "JSON":
             output = [{
                 "dialogue": ta.extract_dialogue(clip.raw_dialogue_entry),
-                "filepath": clip.filepath
+                "filepath": clip.filepath,
+                "filename": clip.filename
             } for clip in clips if ta.extract_dialogue(clip.raw_dialogue_entry) != ""]
             return output
+        else:
+            raise ValueError("Unsupported format. Must be one of: JSON")
+
+    def output_training_dataset(self, actor, dataset_name: str, output_folder: str, training_ratio: float=0.8, seed: int=1):
+        output_file_directory = os.path.join(output_folder, dataset_name)
+        wav_output_file_directory = os.path.join(output_file_directory, "wav")
+        os.makedirs(wav_output_file_directory, exist_ok=True)
+
+        training_set = []
+        validation_set = []
+        outputs = self.build_training_dataset(actor=actor)
+        for output in outputs:
+
+            ch = file_info.channels(output["filepath"])
+            if ch != 1: 
+                print("Encountered multi-channel audio, skipping: ")
+                print(output["filepath"])
+                continue
+
+            dataset_output_filepath = os.path.join(wav_output_file_directory, output["filename"])
+            shutil.copy(
+                output["filepath"],
+                dataset_output_filepath
+            )
+            if random.random() < training_ratio:
+                training_set.append(
+                    dataset_output_filepath + "|" + output["dialogue"]
+                )
+            else:
+                validation_set.append(
+                    dataset_output_filepath + "|" + output["dialogue"]
+                )
+        
+        with open(os.path.join(output_file_directory, "train_filelist.txt"), "w") as f:
+            f.write("\n".join(training_set))
+        with open(os.path.join(output_file_directory, "validation_filelist.txt"), "w") as f:
+            f.write("\n".join(validation_set))

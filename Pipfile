@@ -11,6 +11,8 @@ sqlalchemy = "*"
 pytest = "*"
 voice2text = {editable = true, path = "."}
 pytest-mock = "*"
+python-dotenv = "*"
+sox = "*"
 
 [requires]
 python_version = "3.8"
