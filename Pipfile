@@ -23,6 +23,7 @@ dllogger = {ref = "v0.1.0", git = "https://github.com/NVIDIA/dllogger"}
 torch = "*"
 torchvision = "*"
 torchaudio = "*"
+python-dotenv = "*"
 
 [requires]
 python_version = "3.8"

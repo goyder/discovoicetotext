@@ -50,8 +50,9 @@ def test_generate_dataset(query_engine):
 
 
 def test_generate_dataset_with_dataset_limit(query_engine: queries.QueryEngine):
+    limit = 50
     output = query_engine.build_training_dataset(
         "Kim Kitsuragi",
-        item_count=100
+        item_limit=limit
         )
-    assert len(output) == 100
+    assert len(output) < limit

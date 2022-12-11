@@ -5,7 +5,7 @@ import voice2text.text_analysis as ta
 from sqlalchemy import create_engine
 import os
 from sqlalchemy.orm import sessionmaker
-from typing import Iterable
+from typing import Iterable, Optional
 from sqlalchemy.schema import Column
 import random
 import shutil
@@ -42,7 +42,9 @@ class QueryEngine:
 
     def query_clips_by_actor(self, 
         actor: str, 
-        entities_to_retrieve: Iterable[Column] = query_clips_by_actor_default_entities) -> Iterable[Column]:
+        entities_to_retrieve: Iterable[Column] = query_clips_by_actor_default_entities,
+        item_limit: Optional[int] = None) -> Iterable[Column]:
+            
         with sessionmaker(bind=self.engine)() as session:
             clips = (session.query(ds.DialogueEntry)
                 .join(ds.VoiceOverEntry, ds.VoiceOverEntry.articy_id==ds.DialogueEntry.articy_id)
@@ -52,18 +54,22 @@ class QueryEngine:
                     *entities_to_retrieve
                     )
                 .filter(ds.Actor.name == actor)
-                .all()
-                )
+            )
+            if item_limit:
+                clips = clips.limit(item_limit).all()
+            else:
+                clips = clips.all()
         return clips
 
     @property
     def session(self):
         return sessionmaker(bind=self.engine)()
 
-    def build_training_dataset(self, actor, format="JSON", item_count=None):
+    def build_training_dataset(self, actor, format="JSON", item_limit=None):
         clips = self.query_clips_by_actor(
             actor=actor, 
-            entities_to_retrieve=self.query_clips_by_actor_default_entities
+            entities_to_retrieve=self.query_clips_by_actor_default_entities,
+            item_limit=item_limit
             )
         
         if format == "JSON":
@@ -76,16 +82,15 @@ class QueryEngine:
         else:
             raise ValueError("Unsupported format. Must be one of: JSON")
 
-    def output_training_dataset(self, actor, dataset_name: str, output_folder: str, training_ratio: float=0.8, seed: int=1):
+    def output_training_dataset(self, actor, dataset_name: str, output_folder: str, item_limit=None, training_ratio: float=0.8, seed: int=1):
         output_file_directory = os.path.join(output_folder, dataset_name)
         wav_output_file_directory = os.path.join(output_file_directory, "wav")
         os.makedirs(wav_output_file_directory, exist_ok=True)
 
         training_set = []
         validation_set = []
-        outputs = self.build_training_dataset(actor=actor)
+        outputs = self.build_training_dataset(actor=actor, item_limit=item_limit)
         for output in outputs:
-
             ch = file_info.channels(output["filepath"])
             if ch != 1: 
                 print("Encountered multi-channel audio, skipping: ")
