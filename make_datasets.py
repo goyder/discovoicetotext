@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 actor = "Kim Kitsuragi"
+dataset_name = "kk_training_1"
+output_folder = "datasets"
 
 query_engine = queries.QueryEngine(
     voice_library_filepath=os.environ["VOICEOVER_LIBRARY_FILEPATH"],
@@ -14,6 +16,6 @@ query_engine = queries.QueryEngine(
 query_engine.read_in_data()
 query_engine.output_training_dataset(
     actor=actor,
-    dataset_name="kk_training_1",
-    output_folder="datasets",
+    dataset_name=dataset_name,
+    output_folder=output_folder,
 )

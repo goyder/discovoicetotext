@@ -13,6 +13,16 @@ voice2text = {editable = true, path = "."}
 pytest-mock = "*"
 python-dotenv = "*"
 sox = "*"
+matplotlib = "*"
+numpy = "*"
+inflect = "*"
+librosa = "*"
+scipy = "*"
+resampy = "==0.3.1"
+dllogger = {ref = "v0.1.0", git = "https://github.com/NVIDIA/dllogger"}
+torch = "*"
+torchvision = "*"
+torchaudio = "*"
 
 [requires]
 python_version = "3.8"

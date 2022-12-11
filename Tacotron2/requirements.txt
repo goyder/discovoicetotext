@@ -5,3 +5,6 @@ librosa
 scipy
 resampy==0.3.1
 git+https://github.com/NVIDIA/dllogger@v0.1.0#egg=dllogger
+torch
+torchvision
+torchaudio
