@@ -42,6 +42,8 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 import models
 import loss_functions
 import data_functions
+import inference
+from waveglow.denoiser import Denoiser
 from tacotron2_common.utils import ParseFromConfigFile
 
 import dllogger as DLLogger
@@ -150,6 +152,23 @@ def parse_args(parser):
                              required=False, help='Distributed group name')
     distributed.add_argument('--dist-backend', default='nccl', type=str, choices={'nccl'},
                              help='Distributed run backend')
+
+    # inference parameters
+    inference = parser.add_argument_group("inference")
+    inference.add_argument("--inference", type=bool, default=False,
+                           help="Enable regular inference")
+    inference.add_argument("--tacotron2", default="", type=str,
+                           help="Path to Tacotron2 checkpoint filepath for inference.")
+    inference.add_argument('-i', '--input', type=str, required=True,
+                           help='full path to the input text (phareses separated by new line)')
+    inference.add_argument("--epochs_per_inference", type=int, default=5,
+                           help="How often to run inference")
+    inference.add_argument('-s', '--sigma-infer', default=0.9, type=float)
+    inference.add_argument('-d', '--denoising-strength', default=0.01, type=float)
+    inference.add_argument('--include-warmup', action='store_true',
+                        help='Include warmup')
+    inference.add_argument('--stft-hop-length', type=int, default=256,
+                        help='STFT hop length for estimating audio length from mel size')
 
     benchmark = parser.add_argument_group('benchmark')
     benchmark.add_argument('--bench-class', type=str, default='')
@@ -547,6 +566,35 @@ def main():
                             args.output, args.model_name, local_rank, world_size)
         if local_rank == 0:
             DLLogger.flush()
+
+        if (args.inference) and (epoch % args.epochs_per_inference == 0):
+            DLLogger.log("Running inference at epoch {}.".format(epoch))
+            if args.model_name == "Tacotron2":
+                tacotron2 = model
+                waveglow = inference.load_and_setup_model(
+                    "WaveGlow", parser, args.waveglow, args.fp16, args.cpu, forward_is_infer=True
+                )
+            else:
+                tacotron2 = inference.load_and_setup_model(
+                    "Tacotron2", parser, args.tacotron2, args.fp16, args.cpu, forward_is_infer=True
+                )
+                waveglow = model
+
+            denoiser = Denoiser(waveglow)
+            DLLogger.log("Beginning inference process.")
+            inference.generate_text_inferences(
+                args,
+                waveglow,
+                tacotron2,
+                denoiser
+            )
+
+            DLLogger.log("Deleting unused model and clearing cache.")
+            if args.model_name == "Tacotron2":
+                del waveglow
+            else:
+                del tacotron2
+            torch.cuda.empty_cache()
 
     torch.cuda.synchronize()
     run_stop_time = time.perf_counter()

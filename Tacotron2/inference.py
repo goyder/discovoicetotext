@@ -34,6 +34,7 @@ import numpy as np
 from scipy.io.wavfile import write
 import matplotlib
 import matplotlib.pyplot as plt
+from typing import List
 
 import sys
 
@@ -42,6 +43,7 @@ import dllogger as DLLogger
 from dllogger import StdOutBackend, JSONStreamBackend, Verbosity
 
 from waveglow.denoiser import Denoiser
+
 
 def parse_args(parser):
     """
@@ -212,15 +214,25 @@ def main():
     if not args.cpu:
         denoiser.cuda()
 
-    jitted_tacotron2 = torch.jit.script(tacotron2)
+    generate_text_inferences(args, waveglow, tacotron2, denoiser)
 
+
+def read_texts(input) -> List:
     texts = []
     try:
-        f = open(args.input, 'r')
+        f = open(input, 'r')
         texts = f.readlines()
     except:
         print("Could not read file")
         sys.exit(1)
+    return texts
+
+
+def generate_text_inferences(args, waveglow, tacotron2, denoiser):
+
+    texts = read_texts(args.input)
+
+    jitted_tacotron2 = torch.jit.script(tacotron2)
 
     if args.include_warmup:
         sequence = torch.randint(low=0, high=148, size=(1,50)).long()
@@ -246,7 +258,7 @@ def main():
     with torch.no_grad(), MeasureTime(measurements, "denoiser_time", args.cpu):
         audios = denoiser(audios, strength=args.denoising_strength).squeeze(1)
 
-    print("Stopping after",mel.size(2),"decoder steps")
+    print("Stopping after", mel.size(2), "decoder steps")
     tacotron2_infer_perf = mel.size(0)*mel.size(2)/measurements['tacotron2_time']
     waveglow_infer_perf = audios.size(0)*audios.size(1)/measurements['waveglow_time']
 
@@ -258,7 +270,6 @@ def main():
     DLLogger.log(step=0, data={"latency": (measurements['tacotron2_time']+measurements['waveglow_time']+measurements['denoiser_time'])})
 
     for i, audio in enumerate(audios):
-
         plt.imshow(alignments[i].float().data.cpu().numpy().T, aspect="auto", origin="lower")
         figure_path = os.path.join(args.output,"alignment_"+str(i)+args.suffix+".png")
         plt.savefig(figure_path)
