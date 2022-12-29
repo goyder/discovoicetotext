@@ -26,7 +26,7 @@
 # *****************************************************************************
 
 from tacotron2.text import text_to_sequence
-import models
+from . import models
 import torch
 import argparse
 import os
