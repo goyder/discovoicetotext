@@ -26,7 +26,7 @@
 # *****************************************************************************
 
 import argparse
-from train import main as main_train
+from tacotron2.train import main as main_train
 from inference_perf import main as main_infer
 
 def parse_args(parser):

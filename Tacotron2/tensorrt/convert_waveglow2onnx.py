@@ -32,7 +32,7 @@ import sys
 sys.path.append('./')
 
 from tacotron2_common.utils import ParseFromConfigFile
-from inference import load_and_setup_model
+from tacotron2.inference import load_and_setup_model
 
 def parse_args(parser):
     """

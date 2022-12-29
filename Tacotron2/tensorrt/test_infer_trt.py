@@ -34,7 +34,7 @@ import argparse
 import numpy as np
 from scipy.io.wavfile import write
 
-from inference import checkpoint_from_distributed, unwrap_distributed, MeasureTime, prepare_input_sequence, load_and_setup_model
+from tacotron2.inference import checkpoint_from_distributed, unwrap_distributed, MeasureTime, prepare_input_sequence, load_and_setup_model
 from inference_trt import infer_tacotron2_trt, infer_waveglow_trt
 
 from trt_utils import load_engine

@@ -42,7 +42,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 import models
 import loss_functions
 import data_functions
-import inference
+import tacotron2.inference as inference
 from waveglow.denoiser import Denoiser
 from tacotron2_common.utils import ParseFromConfigFile
 
@@ -50,7 +50,7 @@ import dllogger as DLLogger
 from dllogger import StdOutBackend, JSONStreamBackend, Verbosity
 
 
-def parse_args(parser):
+def populate_args(parser) -> argparse.ArgumentParser:
     """
     Parse commandline arguments.
     """
@@ -159,12 +159,12 @@ def parse_args(parser):
                            help="Enable regular inference")
     inference.add_argument("--tacotron2", default="", type=str,
                            help="Path to Tacotron2 checkpoint filepath for inference.")
-    inference.add_argument('-i', '--input', type=str, required=True,
+    inference.add_argument('-i', '--input', type=str,
                            help='full path to the input text (phareses separated by new line)')
     inference.add_argument("--epochs_per_inference", type=int, default=5,
                            help="How often to run inference")
     inference.add_argument('-s', '--sigma-infer', default=0.9, type=float)
-    inference.add_argument('-d', '--denoising-strength', default=0.01, type=float)
+    inference.add_argument('--denoising-strength', default=0.01, type=float)
     inference.add_argument('--include-warmup', action='store_true',
                         help='Include warmup')
     inference.add_argument('--stft-hop-length', type=int, default=256,
@@ -361,11 +361,17 @@ def adjust_learning_rate(iteration, epoch, optimizer, learning_rate,
         param_group['lr'] = lr
 
 
+def parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
+    args, _ = parser.parse_known_args
+    return args
+
+
 def main():
 
     parser = argparse.ArgumentParser(description='PyTorch Tacotron 2 Training')
-    parser = parse_args(parser)
-    args, _ = parser.parse_known_args()
+    parser = populate_args(parser)
+    args = parse_args(parser)
+
 
     if 'LOCAL_RANK' in os.environ and 'WORLD_SIZE' in os.environ:
         local_rank = int(os.environ['LOCAL_RANK'])
@@ -398,7 +404,7 @@ def main():
 
     model_name = args.model_name
     parser = models.model_parser(model_name, parser)
-    args, _ = parser.parse_known_args()
+    args, _ = parser.parse_known_args(args=args)
 
     torch.backends.cudnn.enabled = args.cudnn_enabled
     torch.backends.cudnn.benchmark = args.cudnn_benchmark

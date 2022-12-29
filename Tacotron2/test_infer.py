@@ -34,7 +34,7 @@ from scipy.io.wavfile import write
 
 import sys
 
-from inference import checkpoint_from_distributed, unwrap_distributed, MeasureTime, prepare_input_sequence, load_and_setup_model
+from tacotron2.inference import checkpoint_from_distributed, unwrap_distributed, MeasureTime, prepare_input_sequence, load_and_setup_model
 
 import time
 import dllogger as DLLogger

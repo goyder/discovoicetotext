@@ -32,7 +32,7 @@ import argparse
 import sys
 sys.path.append('./')
 
-from inference import checkpoint_from_distributed, unwrap_distributed, load_and_setup_model
+from tacotron2.inference import checkpoint_from_distributed, unwrap_distributed, load_and_setup_model
 
 def parse_args(parser):
     """
