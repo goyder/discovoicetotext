@@ -6,7 +6,7 @@ load_dotenv()
 
 actor = "Kim Kitsuragi"
 dataset_name = "kk_dev_dataset"
-output_folder = os.environ["DATASETS_DIR"]
+output_folder = os.environ["TRAINING_DATASETS_DIRECTORY"]
 
 query_engine = queries.QueryEngine(
     voice_library_filepath=os.environ["VOICEOVER_LIBRARY_FILEPATH"],

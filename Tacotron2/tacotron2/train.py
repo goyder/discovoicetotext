@@ -58,7 +58,7 @@ def populate_args(parser) -> argparse.ArgumentParser:
     parser.add_argument('-o', '--output', type=str, required=True,
                         help='Directory to save checkpoints')
     parser.add_argument('-d', '--dataset-path', type=str,
-                        default='./', help='Path to dataset')
+                        default='./', help='Path to datasets')
     parser.add_argument('-m', '--model-name', type=str, default='', required=True,
                         help='Model to train')
     parser.add_argument('--log-file', type=str, default='nvlog.json',
@@ -126,7 +126,7 @@ def populate_args(parser) -> argparse.ArgumentParser:
     audio = parser.add_argument_group('audio parameters')
     audio.add_argument('--max-wav-value', default=32768.0, type=float,
                        help='Maximum audiowave value')
-    audio.add_argument('--sampling-rate', default=22050, type=int,
+    audio.add_argument('--sampling-rate', default=48000, type=int,
                        help='Sampling rate')
     audio.add_argument('--filter-length', default=1024, type=int,
                        help='Filter length')
@@ -159,6 +159,8 @@ def populate_args(parser) -> argparse.ArgumentParser:
                            help="Enable regular inference")
     inference.add_argument("--tacotron2", default="", type=str,
                            help="Path to Tacotron2 checkpoint filepath for inference.")
+    inference.add_argument("--waveglow", default="", type=str,
+                           help="Path to Waveglow checkpoint filepath for inference.")
     inference.add_argument('-i', '--input', type=str,
                            help='full path to the input text (phareses separated by new line)')
     inference.add_argument("--epochs_per_inference", type=int, default=5,
@@ -404,7 +406,7 @@ def main():
 
     model_name = args.model_name
     parser = models.model_parser(model_name, parser)
-    args, _ = parser.parse_known_args(args=args)
+    args = parse_args(parser)
 
     torch.backends.cudnn.enabled = args.cudnn_enabled
     torch.backends.cudnn.benchmark = args.cudnn_benchmark
