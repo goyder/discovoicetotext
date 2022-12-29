@@ -39,9 +39,9 @@ from torch.utils.data.distributed import DistributedSampler
 
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-import models
-import loss_functions
-import data_functions
+from . import models
+from . import loss_functions
+from . import data_functions
 import tacotron2.inference as inference
 from waveglow.denoiser import Denoiser
 from tacotron2_common.utils import ParseFromConfigFile

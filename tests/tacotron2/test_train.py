@@ -1,4 +1,5 @@
 import tacotron2.train as train
+import Tacotron2.tacotron2.train as train
 import argparse
 
 
@@ -7,10 +8,14 @@ def insert_args(parser: argparse.ArgumentParser):
     return parser.parse_args(
         [
             "-o", "/dev/null/",
+            "-d", "dataset/path",
+            "--training-files", "'training_filelist.txt'",
+            "--validation-files", "'validation_filelist.txt'"
             "-m", "Tacotron2",
-            "--epochs", "1",
-            "-lr", "0.01",
-            "-bs", "12"
+            "--epochs", "2",
+            "-lr", "1e-3",
+            "-bs", "12",
+            "--cudnn-enabled",
         ]
     )
 

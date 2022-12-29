@@ -83,9 +83,14 @@ class QueryEngine:
             raise ValueError("Unsupported format. Must be one of: JSON")
 
     def output_training_dataset(self, actor, dataset_name: str, output_folder: str, item_limit=None, training_ratio: float=0.8, seed: int=1):
+        """
+        We push our training dataset to file.
+        We distinguish between the "abs" filepaths and directories, containing real filepaths to where the files get dumped, 
+        and the "relative" filepaths and directories, which are created relative the dataset directory. 
+        """
         output_file_directory = os.path.join(output_folder, dataset_name)
-        wav_output_file_directory = os.path.join(output_file_directory, "wav")
-        os.makedirs(wav_output_file_directory, exist_ok=True)
+        wav_output_file_abs_directory = os.path.join(output_file_directory, "wav")
+        os.makedirs(wav_output_file_abs_directory, exist_ok=True)
 
         training_set = []
         validation_set = []
@@ -97,18 +102,19 @@ class QueryEngine:
                 print(output["filepath"])
                 continue
 
-            dataset_output_filepath = os.path.join(wav_output_file_directory, output["filename"])
+            dataset_output_abs_filepath = os.path.join(wav_output_file_abs_directory, output["filename"])
+            dataset_output_relative_filepath = os.path.join("wav", output["filename"])
             shutil.copy(
                 output["filepath"],
-                dataset_output_filepath
+                dataset_output_abs_filepath
             )
             if random.random() < training_ratio:
                 training_set.append(
-                    dataset_output_filepath + "|" + output["dialogue"]
+                    dataset_output_relative_filepath + "|" + output["dialogue"]
                 )
             else:
                 validation_set.append(
-                    dataset_output_filepath + "|" + output["dialogue"]
+                    dataset_output_relative_filepath + "|" + output["dialogue"]
                 )
         
         with open(os.path.join(output_file_directory, "train_filelist.txt"), "w") as f:

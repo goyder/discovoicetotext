@@ -6,3 +6,4 @@
 **/build/*
 datasets/*
 **/todo.md
+dist/**
