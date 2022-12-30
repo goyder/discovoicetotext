@@ -27,6 +27,9 @@ class TrainingConfig:
 
 @pytest.fixture
 def training_config() -> TrainingConfig:
+
+    # TODO: Clear the output directory each time
+
     # Define the inputs
     output_directory = os.path.join(
         os.environ["OUTPUT_DIRECTORY"],
@@ -47,7 +50,6 @@ def training_config() -> TrainingConfig:
         training_datasets_directory=training_datasets_directory,
         dataset_name=dataset_name
     )
-
 
     return training_config
 
