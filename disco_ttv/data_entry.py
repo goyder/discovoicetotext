@@ -2,7 +2,7 @@ from tkinter import dialog
 from pyparsing import Set
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
-import voice2text.data_structure as ds
+import disco_ttv.data_structure as ds
 import json
 import os
 import os.path

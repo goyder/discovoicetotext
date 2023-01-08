@@ -45,7 +45,12 @@ from dllogger import StdOutBackend, JSONStreamBackend, Verbosity
 from waveglow.denoiser import Denoiser
 
 
-def parse_args(parser):
+def parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
+    args, _ = parser.parse_known_args
+    return args
+
+
+def populate_args(parser):
     """
     Parse commandline arguments.
     """
@@ -62,6 +67,8 @@ def parse_args(parser):
     parser.add_argument('-d', '--denoising-strength', default=0.01, type=float)
     parser.add_argument('-sr', '--sampling-rate', default=22050, type=int,
                         help='Sampling rate')
+    parser.add_argument('--n-mel-channels', default=80, type=int,
+                        help='Number of bins in mel-spectrograms')
 
     run_mode = parser.add_mutually_exclusive_group()
     run_mode.add_argument('--fp16', action='store_true',
@@ -110,7 +117,7 @@ def unwrap_distributed(state_dict):
 
 def load_and_setup_model(model_name, parser, checkpoint, fp16_run, cpu_run, forward_is_infer=False):
     model_parser = models.model_parser(model_name, parser, add_help=False)
-    model_args, _ = model_parser.parse_known_args()
+    model_args = parse_args(model_parser)
 
     model_config = models.get_model_config(model_name, model_args)
     model = models.get_model(model_name, model_config, cpu_run=cpu_run,
@@ -196,8 +203,8 @@ def main():
     """
     parser = argparse.ArgumentParser(
         description='PyTorch Tacotron 2 Inference')
-    parser = parse_args(parser)
-    args, _ = parser.parse_known_args()
+    parser = populate_args(parser)
+    args = parse_args(parser)
 
     log_file = os.path.join(args.output, args.log_file)
     DLLogger.init(backends=[JSONStreamBackend(Verbosity.DEFAULT, log_file),
@@ -255,6 +262,7 @@ def generate_text_inferences(args, waveglow, tacotron2, denoiser):
     with torch.no_grad(), MeasureTime(measurements, "waveglow_time", args.cpu):
         audios = waveglow(mel, sigma=args.sigma_infer)
         audios = audios.float()
+
     with torch.no_grad(), MeasureTime(measurements, "denoiser_time", args.cpu):
         audios = denoiser(audios, strength=args.denoising_strength).squeeze(1)
 

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-import voice2text.text_analysis as ta
+import disco_ttv.text_analysis as ta
 import pytest
 
 

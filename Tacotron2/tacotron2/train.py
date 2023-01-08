@@ -29,6 +29,7 @@ import os
 import time
 import argparse
 import numpy as np
+from copy import deepcopy
 from contextlib import contextmanager
 
 import torch
@@ -155,15 +156,15 @@ def populate_args(parser) -> argparse.ArgumentParser:
 
     # inference parameters
     inference = parser.add_argument_group("inference")
-    inference.add_argument("--inference", type=bool, default=False,
+    inference.add_argument("--inference",  action='store_true',
                            help="Enable regular inference")
     inference.add_argument("--tacotron2", default="", type=str,
                            help="Path to Tacotron2 checkpoint filepath for inference.")
     inference.add_argument("--waveglow", default="", type=str,
                            help="Path to Waveglow checkpoint filepath for inference.")
     inference.add_argument('-i', '--input', type=str,
-                           help='full path to the input text (phareses separated by new line)')
-    inference.add_argument("--epochs_per_inference", type=int, default=5,
+                           help='full path to the input text (phrases separated by new line)')
+    inference.add_argument("--epochs-per-inference", type=int, default=5,
                            help="How often to run inference")
     inference.add_argument('-s', '--sigma-infer', default=0.9, type=float)
     inference.add_argument('--denoising-strength', default=0.01, type=float)
@@ -171,6 +172,14 @@ def populate_args(parser) -> argparse.ArgumentParser:
                         help='Include warmup')
     inference.add_argument('--stft-hop-length', type=int, default=256,
                         help='STFT hop length for estimating audio length from mel size')
+    inference.add_argument('--n-mel-channels', default=80, type=int,
+                        help='Number of bins in mel-spectrograms')
+
+    run_mode = parser.add_mutually_exclusive_group()
+    run_mode.add_argument('--fp16', action='store_true',
+                        help='Run inference with mixed precision')
+    run_mode.add_argument('--cpu', action='store_true',
+                        help='Run inference on CPU')
 
     benchmark = parser.add_argument_group('benchmark')
     benchmark.add_argument('--bench-class', type=str, default='')
@@ -245,6 +254,8 @@ def save_checkpoint(model, optimizer, scaler, epoch, config, output_dir,
             os.remove(symlink_dst)
 
         os.symlink(symlink_src, symlink_dst)
+    
+    return checkpoint_path
 
 
 def get_last_checkpoint_filename(output_dir, model_name):
@@ -364,7 +375,7 @@ def adjust_learning_rate(iteration, epoch, optimizer, learning_rate,
 
 
 def parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
-    args, _ = parser.parse_known_args
+    args, _ = parser.parse_known_args()
     return args
 
 
@@ -373,7 +384,6 @@ def main():
     parser = argparse.ArgumentParser(description='PyTorch Tacotron 2 Training')
     parser = populate_args(parser)
     args = parse_args(parser)
-
 
     if 'LOCAL_RANK' in os.environ and 'WORLD_SIZE' in os.environ:
         local_rank = int(os.environ['LOCAL_RANK'])
@@ -405,6 +415,9 @@ def main():
     DLLogger.metadata('val_items_per_sec', {'unit': 'items/s'})
 
     model_name = args.model_name
+    if args.inference:
+        waveglow_parser = deepcopy(parser)
+        tacotron2_parser = deepcopy(parser)
     parser = models.model_parser(model_name, parser)
     args = parse_args(parser)
 
@@ -418,9 +431,12 @@ def main():
     run_start_time = time.perf_counter()
 
     model_config = models.get_model_config(model_name, args)
-    model = models.get_model(model_name, model_config,
-                             cpu_run=False,
-                             uniform_initialize_bn_weight=not args.disable_uniform_initialize_bn_weight)
+    model = models.get_model(
+        model_name, 
+        model_config,
+        cpu_run=False,
+        uniform_initialize_bn_weight=not args.disable_uniform_initialize_bn_weight
+    )
 
     if distributed_run:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank)
@@ -570,38 +586,41 @@ def main():
                                                args.amp)
 
         if (epoch % args.epochs_per_checkpoint == 0) and (args.bench_class == "" or args.bench_class == "train"):
-            save_checkpoint(model, optimizer, scaler, epoch, model_config,
-                            args.output, args.model_name, local_rank, world_size)
+            checkpoint_filepath = save_checkpoint(
+                model, optimizer, scaler, epoch, model_config,
+                args.output, args.model_name, local_rank, world_size
+                )
         if local_rank == 0:
             DLLogger.flush()
 
         if (args.inference) and (epoch % args.epochs_per_inference == 0):
-            DLLogger.log("Running inference at epoch {}.".format(epoch))
-            if args.model_name == "Tacotron2":
-                tacotron2 = model
-                waveglow = inference.load_and_setup_model(
-                    "WaveGlow", parser, args.waveglow, args.fp16, args.cpu, forward_is_infer=True
-                )
-            else:
-                tacotron2 = inference.load_and_setup_model(
-                    "Tacotron2", parser, args.tacotron2, args.fp16, args.cpu, forward_is_infer=True
-                )
-                waveglow = model
+            DLLogger.log(step=(epoch,), data={"Inference at epoch": epoch})
 
-            denoiser = Denoiser(waveglow)
-            DLLogger.log("Beginning inference process.")
+            # Load the most recent checkpoint of the model being trained
+            if args.model_name == "Tacotron2":
+                args.tacotron2 = checkpoint_filepath
+            else:
+                args.waveglow = checkpoint_filepath
+
+            waveglow_inference = inference.load_and_setup_model(
+                "WaveGlow", waveglow_parser, args.waveglow, forward_is_infer=True, fp16_run=False, cpu_run=True
+            )
+            tacotron2_inference = inference.load_and_setup_model(
+                "Tacotron2", tacotron2_parser, args.tacotron2, forward_is_infer=True, fp16_run=False, cpu_run=True
+            )
+
+            denoiser = Denoiser(waveglow_inference)
             inference.generate_text_inferences(
                 args,
-                waveglow,
-                tacotron2,
+                waveglow_inference,
+                tacotron2_inference,
                 denoiser
             )
 
-            DLLogger.log("Deleting unused model and clearing cache.")
-            if args.model_name == "Tacotron2":
-                del waveglow
-            else:
-                del tacotron2
+            DLLogger.log(step=(epoch,), data={"Deleting model cache.": epoch})
+            del denoiser
+            del waveglow_inference
+            del tacotron2_inference
             torch.cuda.empty_cache()
 
     torch.cuda.synchronize()

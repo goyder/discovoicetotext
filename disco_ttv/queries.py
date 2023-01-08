@@ -1,7 +1,8 @@
 from multiprocessing.sharedctypes import Value
-import voice2text.data_structure as ds
-import voice2text.data_entry as de
-import voice2text.text_analysis as ta
+import disco_ttv.data_structure as ds
+import disco_ttv.data_entry as de
+import disco_ttv.text_analysis as ta
+from disco_ttv.settings import Settings
 from sqlalchemy import create_engine
 import os
 from sqlalchemy.orm import sessionmaker
@@ -15,22 +16,18 @@ from sox import file_info
 class QueryEngine:
 
     def __init__(self, 
-        voice_library_filepath: str, 
-        game_data_filepath: str, 
-        audio_clip_directory: str):
-
-        self.voice_library_filepath = voice_library_filepath
-        self.game_data_filepath = game_data_filepath
-        self.audio_clip_directory = audio_clip_directory
+        settings: Settings):
+        
+        self.settings = settings
 
         self.engine = create_engine("sqlite:///:memory:", echo=True)
         ds.Base.metadata.create_all(self.engine)
 
     def read_in_data(self):
-        de.read_in_voice_library(self.engine, os.environ["VOICEOVER_LIBRARY_FILEPATH"])
-        de.read_in_dialogue_entries(self.engine, os.environ["GAME_DATA_FILEPATH"])
-        de.read_in_audio_clips(self.engine, os.environ["AUDIO_CLIP_DIRECTORY"])
-        de.read_in_actors(self.engine, os.environ["GAME_DATA_FILEPATH"])
+        de.read_in_voice_library(self.engine, self.settings.voiceover_library_filepath)
+        de.read_in_dialogue_entries(self.engine, self.settings.game_data_filepath)
+        de.read_in_audio_clips(self.engine, self.settings.audio_clip_directory)
+        de.read_in_actors(self.engine, self.settings.game_data_filepath)
 
     query_clips_by_actor_default_entities = [
         ds.DialogueEntry.raw_dialogue_entry, 

@@ -27,10 +27,9 @@
 
 import argparse
 
-from tacotron2.text import symbols
-
 
 def tacotron2_parser(parent, add_help=False):
+    from tacotron2.text import symbols
     """
     Parse commandline arguments.
     """
@@ -39,11 +38,9 @@ def tacotron2_parser(parent, add_help=False):
     # misc parameters
     parser.add_argument('--mask-padding', default=False, type=bool,
                         help='Use mask padding')
-    parser.add_argument('--n-mel-channels', default=80, type=int,
-                        help='Number of bins in mel-spectrograms')
 
     # symbols parameters
-    global symbols
+    # global symbols
     len_symbols = len(symbols)
     symbols = parser.add_argument_group('symbols parameters')
     symbols.add_argument('--n-symbols', default=len_symbols, type=int,

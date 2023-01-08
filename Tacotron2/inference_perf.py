@@ -48,7 +48,7 @@ def parse_args(parser):
                         required=True, help='Model to train')
     parser.add_argument('--model', type=str, default='',
                         help='Full path to the model checkpoint file')
-    parser.add_argument('-sr', '--sampling-rate', default=22050, type=int,
+    parser.add_argument('-sr', '--sampling-rate', default=48000, type=int,
                         help='Sampling rate')
     parser.add_argument('--fp16', action='store_true',
                         help='inference with AMP')

@@ -1,4 +1,4 @@
-import voice2text.queries as queries
+import disco_ttv.queries as queries
 import os
 from dotenv import load_dotenv
 

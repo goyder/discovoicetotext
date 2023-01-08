@@ -4,7 +4,7 @@ from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.orm import sessionmaker, Session
 import pytest
 
-import voice2text.data_structure as ds
+import disco_ttv.data_structure as ds
 
 
 @pytest.fixture

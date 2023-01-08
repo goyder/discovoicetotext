@@ -1,17 +1,17 @@
 import test_data_entry as tde
-import voice2text.queries as queries
-import voice2text.data_structure as ds
+import disco_ttv.queries as queries
+import disco_ttv.data_structure as ds
+from disco_ttv.settings import Settings
 import pytest
 import os
 from sqlalchemy.orm import Query
 
+settings = Settings()
 
 @pytest.fixture
 def query_engine():
     query_engine = queries.QueryEngine(
-        voice_library_filepath=os.environ["VOICEOVER_LIBRARY_FILEPATH"],
-        game_data_filepath=os.environ["GAME_DATA_FILEPATH"],
-        audio_clip_directory=os.environ["AUDIO_CLIP_DIRECTORY"]
+        settings=settings
     )
     query_engine.read_in_data()
     return query_engine

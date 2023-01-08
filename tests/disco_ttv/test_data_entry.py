@@ -1,6 +1,7 @@
-from tkinter import dialog
-import voice2text.data_entry as de
-import voice2text.data_structure as ds
+import disco_ttv.data_entry as de
+import disco_ttv.data_structure as ds
+from disco_ttv.settings import Settings
+
 import os
 import pytest
 from pytest_mock import mocker
@@ -8,6 +9,7 @@ from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.orm import sessionmaker
 import json
 
+settings = Settings()
 
 """Fixtures"""
 
@@ -21,7 +23,7 @@ def sql_engine() -> Engine:
 
 @pytest.fixture(scope="session")
 def game_data_json() -> dict:
-    with open(os.environ["GAME_DATA_FILEPATH"], "r") as f:
+    with open(settings.game_data_filepath, "r") as f:
         game_data_json = json.load(f)
     return game_data_json
 
@@ -48,10 +50,10 @@ def loaded_engine() -> Engine:
     engine = create_engine("sqlite:///:memory:", echo=True)
     ds.Base.metadata.create_all(engine)
     
-    de.read_in_voice_library(engine, os.environ["VOICEOVER_LIBRARY_FILEPATH"])
-    de.read_in_dialogue_entries(engine, os.environ["GAME_DATA_FILEPATH"])
-    de.read_in_audio_clips(engine, os.environ["AUDIO_CLIP_DIRECTORY"])
-    de.read_in_actors(engine, os.environ["GAME_DATA_FILEPATH"])
+    de.read_in_voice_library(engine, settings.voiceover_library_filepath)
+    de.read_in_dialogue_entries(engine, settings.game_data_filepath)
+    de.read_in_audio_clips(engine, settings.audio_clip_directory)
+    de.read_in_actors(engine, settings.game_data_filepath)
     return engine
 
 
@@ -59,7 +61,7 @@ def loaded_engine() -> Engine:
 
 
 def test_read_in_voice_library(sql_engine):
-    de.read_in_voice_library(sql_engine, os.environ["VOICEOVER_LIBRARY_FILEPATH"])
+    de.read_in_voice_library(sql_engine, settings.voiceover_library_filepath)
     
     with sessionmaker(bind=sql_engine)() as session:
         assert session.query(ds.VoiceOverEntry).count() > 0
@@ -67,7 +69,7 @@ def test_read_in_voice_library(sql_engine):
 
 
 def test_read_in_dialogue_entries(sql_engine):
-    de.read_in_dialogue_entries(sql_engine, os.environ["GAME_DATA_FILEPATH"])
+    de.read_in_dialogue_entries(sql_engine, settings.game_data_filepath)
     
     with sessionmaker(bind=sql_engine)() as session:
         assert session.query(ds.DialogueEntry).count() > 0
@@ -75,7 +77,7 @@ def test_read_in_dialogue_entries(sql_engine):
 
 
 def test_read_in_audio_clips(sql_engine):
-    de.read_in_audio_clips(sql_engine, os.environ["AUDIO_CLIP_DIRECTORY"])
+    de.read_in_audio_clips(sql_engine, settings.audio_clip_directory)
 
     with sessionmaker(bind=sql_engine)() as session:
         assert session.query(ds.AudioClip).count() > 0
@@ -86,7 +88,7 @@ def test_read_in_audio_clips(sql_engine):
 
 
 def test_convert_voice_library():
-    with open(os.environ["VOICEOVER_LIBRARY_FILEPATH"], "r") as f:
+    with open(settings.voiceover_library_filepath, "r") as f:
         voice_library_json = json.load(f)
     
     voice_library_mapped = de.convert_voice_library_json_to_mapping(voice_library_json)
@@ -115,11 +117,11 @@ def test_generate_audio_clip_mapping(mocker):
     mock_filesize = 1024
     
     mocker.patch(
-        "voice2text.data_entry.os.listdir",
+        "disco_ttv.data_entry.os.listdir",
         return_value=["this.wav", "that.wav", "junk.mp4"]
     )
     mocker.patch(
-        "voice2text.data_entry.os.path.getsize",
+        "disco_ttv.data_entry.os.path.getsize",
         return_value=mock_filesize
     )
     audio_clip_mappings = de.extract_audio_clip_mappings(mock_directory)

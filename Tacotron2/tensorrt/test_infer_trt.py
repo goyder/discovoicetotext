@@ -61,7 +61,7 @@ def parse_args(parser):
     parser.add_argument('--waveglow-ckpt', type=str, default="",
                         help='full path to the WaveGlow model checkpoint file')
     parser.add_argument('-s', '--sigma-infer', default=0.6, type=float)
-    parser.add_argument('-sr', '--sampling-rate', default=22050, type=int,
+    parser.add_argument('-sr', '--sampling-rate', default=48000, type=int,
                         help='Sampling rate')
     parser.add_argument('--fp16', action='store_true',
                         help='inference with FP16')

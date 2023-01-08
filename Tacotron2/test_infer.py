@@ -54,7 +54,7 @@ def parse_args(parser):
                         help='full path to the WaveGlow model checkpoint file')
     parser.add_argument('-s', '--sigma-infer', default=0.6, type=float)
     parser.add_argument('-d', '--denoising-strength', default=0.01, type=float)
-    parser.add_argument('-sr', '--sampling-rate', default=22050, type=int,
+    parser.add_argument('-sr', '--sampling-rate', default=48000, type=int,
                         help='Sampling rate')
 
     run_mode = parser.add_mutually_exclusive_group()

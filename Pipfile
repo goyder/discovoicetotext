@@ -9,7 +9,7 @@ pandas = "*"
 [packages]
 sqlalchemy = "*"
 pytest = "*"
-voice2text = {editable = true, path = "."}
+disco_ttv = {editable = true, path = "."}
 tacotron2 = {editable = true, path = "./Tacotron2"}
 pytest-mock = "*"
 python-dotenv = "*"
@@ -24,6 +24,7 @@ dllogger = {ref = "v0.1.0", git = "https://github.com/NVIDIA/dllogger"}
 torch = "*"
 torchvision = "*"
 torchaudio = "*"
+pydantic = "*"
 
 [requires]
 python_version = "3.8"

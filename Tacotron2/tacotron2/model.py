@@ -27,7 +27,7 @@
 
 from math import sqrt
 import torch
-from torch import nn
+from torch import nn, Tensor
 from torch.nn import functional as F
 import sys
 from os.path import abspath, dirname
@@ -35,7 +35,6 @@ from os.path import abspath, dirname
 sys.path.append(abspath(dirname(__file__)+'/../'))
 from tacotron2_common.layers import ConvNorm, LinearNorm
 from tacotron2_common.utils import to_gpu, get_mask_from_lengths
-
 
 class LocationLayer(nn.Module):
     def __init__(self, attention_n_filters, attention_kernel_size,
@@ -673,7 +672,6 @@ class Tacotron2(nn.Module):
         return self.parse_output(
             [mel_outputs, mel_outputs_postnet, gate_outputs, alignments],
             output_lengths)
-
 
     def infer(self, inputs, input_lengths):
 
