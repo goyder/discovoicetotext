@@ -1,5 +1,6 @@
 import tacotron2.train as train
 import argparse
+import shutil
 import pytest
 import os
 from dataclasses import dataclass
@@ -48,18 +49,18 @@ class TrainingConfig:
 @pytest.fixture
 def training_config() -> TrainingConfig:
 
-    # TODO: Clear the output directory each time
+    training_datasets_directory = settings.training_datasets_directory
+    dataset_name = settings.test_dataset_name
+    model_directory = settings.model_directory
 
     # Define the inputs
     output_directory = os.path.join(
         settings.output_directory,
         "test_directory"
     )
-    training_datasets_directory = settings.training_datasets_directory
-    dataset_name = settings.test_dataset_name
-    model_directory = settings.model_directory
 
     # Delete, and then create, our directories
+    shutil.rmtree(output_directory)
     os.makedirs(
         output_directory,
         exist_ok=True

@@ -1,4 +1,4 @@
-.env
+.env*
 .vscode/*
 .pytest_cache/*
 **/*.egg-info/*
