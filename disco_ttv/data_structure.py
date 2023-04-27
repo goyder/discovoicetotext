@@ -4,6 +4,7 @@ from sqlalchemy import ForeignKey
 
 Base = declarative_base()
 
+
 class AudioClip(Base):
     __tablename__ = "audio_clip"
 
@@ -12,7 +13,9 @@ class AudioClip(Base):
     filename = Column(String)
     filepath = Column(String)
 
-    voiceover_entry = relationship("VoiceOverEntry", back_populates="audio_clip", uselist=False)
+    voiceover_entry = relationship(
+        "VoiceOverEntry", back_populates="audio_clip", uselist=False
+    )
 
 
 class Actor(Base):
@@ -34,7 +37,9 @@ class DialogueEntry(Base):
     actor_id = Column(Integer, nullable=True)
     conversant_id = Column(Integer, nullable=True)
 
-    voiceover_entry = relationship("VoiceOverEntry", back_populates="dialogue_entry", uselist=False)
+    voiceover_entry = relationship(
+        "VoiceOverEntry", back_populates="dialogue_entry", uselist=False
+    )
 
 
 class VoiceOverEntry(Base):
@@ -46,6 +51,7 @@ class VoiceOverEntry(Base):
     path_to_clip_in_project = Column(String)
     filename = Column(String, ForeignKey("audio_clip.filename"), nullable=True)
 
-    dialogue_entry = relationship("DialogueEntry", back_populates="voiceover_entry", uselist=False)
+    dialogue_entry = relationship(
+        "DialogueEntry", back_populates="voiceover_entry", uselist=False
+    )
     audio_clip = relationship("AudioClip", back_populates="voiceover_entry")
-

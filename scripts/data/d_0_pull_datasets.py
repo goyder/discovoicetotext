@@ -18,7 +18,7 @@ for directory in [
     settings.output_directory,
     game_data_directory,
     voiceover_library_directory,
-    audio_clip_directory
+    audio_clip_directory,
 ]:
     os.makedirs(directory, exist_ok=True)
 

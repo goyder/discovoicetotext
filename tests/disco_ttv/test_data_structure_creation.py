@@ -17,15 +17,15 @@ def sql_engine() -> Engine:
 def test_item_creation(sql_engine: Engine):
     Session = sessionmaker(bind=sql_engine)
     audioclip = ds.AudioClip(
-        size=510,
-        filename="here.wav",
-        filepath="/home/user/here.wav"
+        size=510, filename="here.wav", filepath="/home/user/here.wav"
     )
     with Session() as session:
         session.add(audioclip)
         session.commit()
 
-        pulled_audioclip = session.query(ds.AudioClip).filter_by(filename="here.wav").first()
+        pulled_audioclip = (
+            session.query(ds.AudioClip).filter_by(filename="here.wav").first()
+        )
 
     assert pulled_audioclip.filename == audioclip.filename
 
@@ -34,15 +34,11 @@ def test_item_creation(sql_engine: Engine):
 
 def test_linked_item_creation(sql_engine: Engine):
     Session = sessionmaker(bind=sql_engine)
-    audioclip = ds.AudioClip(
-        size=500,
-        filename="there.wav",
-        filepath="home/there.wav"
-    )
+    audioclip = ds.AudioClip(size=500, filename="there.wav", filepath="home/there.wav")
 
     conversation_node = ds.DialogueEntry(
         id=100,
-        raw_dialogue_entry="The door is indifferent to your loneliness. The world does not care."
+        raw_dialogue_entry="The door is indifferent to your loneliness. The world does not care.",
     )
 
     voice_over_entry = ds.VoiceOverEntry(
@@ -59,6 +55,8 @@ def test_linked_item_creation(sql_engine: Engine):
         session.add(voice_over_entry)
         session.commit()
 
-        pulled_audioclip = session.query(ds.AudioClip).filter_by(filename="there.wav").first()
+        pulled_audioclip = (
+            session.query(ds.AudioClip).filter_by(filename="there.wav").first()
+        )
 
     pass

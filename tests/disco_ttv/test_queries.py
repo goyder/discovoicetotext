@@ -8,11 +8,10 @@ from sqlalchemy.orm import Query
 
 settings = Settings()
 
+
 @pytest.fixture
 def query_engine():
-    query_engine = queries.QueryEngine(
-        settings=settings
-    )
+    query_engine = queries.QueryEngine(settings=settings)
     query_engine.read_in_data()
     return query_engine
 
@@ -26,11 +25,11 @@ def test_retrieve_character_audio_clips(query_engine):
 
 def test_complete_actor_queries(query_engine):
     outputs = Query(ds.Actor, session=query_engine.session).all()
-    
+
     actor_id_mappings = {
         2: "Intellect",
         31: "Self-Educated Humanitarian",
-        201: "Firefighter's Axe"
+        201: "Firefighter's Axe",
     }
 
     for output in outputs:
@@ -51,8 +50,5 @@ def test_generate_dataset(query_engine):
 
 def test_generate_dataset_with_dataset_limit(query_engine: queries.QueryEngine):
     limit = 50
-    output = query_engine.build_training_dataset(
-        "Kim Kitsuragi",
-        item_limit=limit
-        )
+    output = query_engine.build_training_dataset("Kim Kitsuragi", item_limit=limit)
     assert len(output) < limit

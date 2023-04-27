@@ -46,10 +46,9 @@ def actor_object(game_data_json: dict) -> list:
 
 @pytest.fixture(scope="module")
 def loaded_engine() -> Engine:
-    
     engine = create_engine("sqlite:///:memory:", echo=True)
     ds.Base.metadata.create_all(engine)
-    
+
     de.read_in_voice_library(engine, settings.voiceover_library_filepath)
     de.read_in_dialogue_entries(engine, settings.game_data_filepath)
     de.read_in_audio_clips(engine, settings.audio_clip_directory)
@@ -62,7 +61,7 @@ def loaded_engine() -> Engine:
 
 def test_read_in_voice_library(sql_engine):
     de.read_in_voice_library(sql_engine, settings.voiceover_library_filepath)
-    
+
     with sessionmaker(bind=sql_engine)() as session:
         assert session.query(ds.VoiceOverEntry).count() > 0
     pass
@@ -70,7 +69,7 @@ def test_read_in_voice_library(sql_engine):
 
 def test_read_in_dialogue_entries(sql_engine):
     de.read_in_dialogue_entries(sql_engine, settings.game_data_filepath)
-    
+
     with sessionmaker(bind=sql_engine)() as session:
         assert session.query(ds.DialogueEntry).count() > 0
     pass
@@ -82,7 +81,7 @@ def test_read_in_audio_clips(sql_engine):
     with sessionmaker(bind=sql_engine)() as session:
         assert session.query(ds.AudioClip).count() > 0
     pass
-        
+
 
 """Voice library conversion"""
 
@@ -90,18 +89,26 @@ def test_read_in_audio_clips(sql_engine):
 def test_convert_voice_library():
     with open(settings.voiceover_library_filepath, "r") as f:
         voice_library_json = json.load(f)
-    
+
     voice_library_mapped = de.convert_voice_library_json_to_mapping(voice_library_json)
     for item in voice_library_mapped:
-        for header in ["articy_id", "asset_name", "asset_bundle", "path_to_clip_in_project", "filename"]:
+        for header in [
+            "articy_id",
+            "asset_name",
+            "asset_bundle",
+            "path_to_clip_in_project",
+            "filename",
+        ]:
             assert header in item.keys()
 
-    
+
 """Game data"""
 
 
 def test_extract_all_dialogue_from_conversation(single_conversation: dict):
-    dialogue_entries = de.extract_dialogue_entries_from_conversation(single_conversation)
+    dialogue_entries = de.extract_dialogue_entries_from_conversation(
+        single_conversation
+    )
     assert len(dialogue_entries) > 100
     for dialogue_entry in dialogue_entries:
         for column_name in de.dialogue_entry_mapping_key.values():
@@ -112,31 +119,27 @@ def test_extract_all_dialogue_from_conversation(single_conversation: dict):
 
 
 def test_generate_audio_clip_mapping(mocker):
-
     mock_directory = "/home/mock_directory"
     mock_filesize = 1024
-    
+
     mocker.patch(
         "disco_ttv.data_entry.os.listdir",
-        return_value=["this.wav", "that.wav", "junk.mp4"]
+        return_value=["this.wav", "that.wav", "junk.mp4"],
     )
-    mocker.patch(
-        "disco_ttv.data_entry.os.path.getsize",
-        return_value=mock_filesize
-    )
+    mocker.patch("disco_ttv.data_entry.os.path.getsize", return_value=mock_filesize)
     audio_clip_mappings = de.extract_audio_clip_mappings(mock_directory)
 
     assert audio_clip_mappings == [
         {
             "filename": "this.wav",
             "size": mock_filesize,
-            "filepath": "{}/this.wav".format(mock_directory)
+            "filepath": "{}/this.wav".format(mock_directory),
         },
         {
             "filename": "that.wav",
             "size": mock_filesize,
-            "filepath": "{}/that.wav".format(mock_directory)
-        }
+            "filepath": "{}/that.wav".format(mock_directory),
+        },
     ]
 
 

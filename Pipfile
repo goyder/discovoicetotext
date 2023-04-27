@@ -20,6 +20,8 @@ scipy = "*"
 resampy = "==0.3.1"
 pydantic = "*"
 boto3 = "*"
+python-ffmpeg = "*"
+black = "*"
 
 [requires]
 python_version = "3.10"

@@ -7,9 +7,7 @@ actor = "Kim Kitsuragi"
 dataset_name = "kk_training_dataset_1"
 output_folder = settings.training_datasets_directory
 
-query_engine = queries.QueryEngine(
-    settings=settings
-)
+query_engine = queries.QueryEngine(settings=settings)
 query_engine.read_in_data()
 query_engine.output_training_dataset(
     actor=actor,
