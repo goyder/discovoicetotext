@@ -10,22 +10,16 @@ pandas = "*"
 sqlalchemy = "*"
 pytest = "*"
 disco_ttv = {editable = true, path = "."}
-tacotron2 = {editable = true, path = "./Tacotron2"}
 pytest-mock = "*"
 python-dotenv = "*"
 sox = "*"
 matplotlib = "*"
 numpy = "*"
 inflect = "*"
-librosa = "*"
 scipy = "*"
 resampy = "==0.3.1"
-dllogger = {ref = "v0.1.0", git = "https://github.com/NVIDIA/dllogger"}
-torch = "*"
-torchvision = "*"
-torchaudio = "*"
 pydantic = "*"
 boto3 = "*"
 
 [requires]
-python_version = "3.8"
+python_version = "3.10"
